@@ -24,3 +24,88 @@ class RecognizeTest(mini.MiniTest):
         page=self.app.get_current_page()
         item=page.data.loadingText
         self.assertIn("识别出错",item,"测试信息:上传图片成功，获取到空的猫列表成功返回无猫")
+
+    def test_recognize_partial_failure(self):
+        recognize_result = {
+            "statusCode":200,
+            "data": {
+                "code": 0,
+                "msg": "",
+                "data": {
+                    "cats":[
+                        {
+                            "cat_id": 0,
+                            "confidence": "0.9",
+                        },
+                        {
+                            "cat_id": 3,
+                            "confidence": "0.8",
+                        }
+                    ]
+                }
+            }
+        }
+        self.app.mock_wx_method("request",result=recognize_result,success=True)
+        self.page.call_method("postMyImg",{"myBase64Img":"anything because mock"})
+        self.page.wait_data_contains(["rescats","userimage"])
+        self.app.restore_wx_method("request")
+        page=self.app.get_current_page()
+        self.assertEqual(len(page.data["rescats"]), 1)
+        self.assertDictContainsSubset({"cat_id":3}, page.data["rescats"][0], "成功返回了识猫结果中正确的那部分")
+
+    def test_recognize_all_failure(self):
+        recognize_result = {
+            "statusCode":200,
+            "data": {
+                "code": 0,
+                "msg": "",
+                "data": {
+                    "cats":[
+                        {
+                            "cat_id": 0,
+                            "confidence": "0.9",
+                        },
+                        {
+                            "cat_id": 1,
+                            "confidence": "0.8",
+                        }
+                    ]
+                }
+            }
+        }
+        self.app.mock_wx_method("request",result=recognize_result,success=True)
+        self.page.call_method("postMyImg",{"myBase64Img":"anything because mock"})
+        self.page.wait_data_contains(["loadingfail"])#检查loadingfail是否置为1
+        self.app.restore_wx_method("request")
+        page=self.app.get_current_page()
+        item=page.data.loadingText
+        self.assertIn("识别出错",item,"获取到猫列表，但所有猫均请求失败")
+    
+    def test_recognize_all_success(self):
+        recognize_result = {
+            "statusCode":200,
+            "data": {
+                "code": 0,
+                "msg": "",
+                "data": {
+                    "cats":[
+                        {
+                            "cat_id": 3,
+                            "confidence": "0.9",
+                        },
+                        {
+                            "cat_id": 4,
+                            "confidence": "0.8",
+                        }
+                    ]
+                }
+            }
+        }
+        self.app.mock_wx_method("request",result=recognize_result,success=True)
+        self.page.call_method("postMyImg",{"myBase64Img":"anything because mock"})
+        self.page.wait_data_contains(["rescats","userimage"])
+        self.app.restore_wx_method("request")
+        page=self.app.get_current_page()
+        self.assertEqual(len(page.data["rescats"]), 2)
+        self.assertDictContainsSubset({"cat_id":3}, page.data["rescats"][0])
+        self.assertDictContainsSubset({"cat_id":4}, page.data["rescats"][1], "成功返回了识猫结果中的全部2只猫咪")
