@@ -1,3 +1,4 @@
+from unittest.signals import registerResult
 import minium as mini
 
 class RecognizeTest(mini.MiniTest):
@@ -26,6 +27,7 @@ class RecognizeTest(mini.MiniTest):
         self.assertIn("识别出错",item,"测试信息:上传图片成功，获取到空的猫列表成功返回无猫")
 
     def test_recognize_partial_failure(self):
+        self.app.restore_wx_method("request")
         recognize_result = {
             "statusCode":200,
             "data": {
@@ -45,15 +47,16 @@ class RecognizeTest(mini.MiniTest):
                 }
             }
         }
-        self.app.mock_wx_method("request",result=recognize_result,success=True)
+        self.app.mock_request(".*/identify.*", success=recognize_result)
         self.page.call_method("postMyImg",{"myBase64Img":"anything because mock"})
         self.page.wait_data_contains(["rescats","userimage"])
-        self.app.restore_wx_method("request")
+        
         page=self.app.get_current_page()
         self.assertEqual(len(page.data["rescats"]), 1)
         self.assertDictContainsSubset({"cat_id":3}, page.data["rescats"][0], "成功返回了识猫结果中正确的那部分")
 
     def test_recognize_all_failure(self):
+        self.app.restore_wx_method("request")
         recognize_result = {
             "statusCode":200,
             "data": {
@@ -73,15 +76,16 @@ class RecognizeTest(mini.MiniTest):
                 }
             }
         }
-        self.app.mock_wx_method("request",result=recognize_result,success=True)
+        self.app.mock_request(".*/identify.*", success=recognize_result)
         self.page.call_method("postMyImg",{"myBase64Img":"anything because mock"})
         self.page.wait_data_contains(["loadingfail"])#检查loadingfail是否置为1
-        self.app.restore_wx_method("request")
+        
         page=self.app.get_current_page()
         item=page.data.loadingText
         self.assertIn("识别出错",item,"获取到猫列表，但所有猫均请求失败")
     
     def test_recognize_all_success(self):
+        self.app.restore_wx_method("request")
         recognize_result = {
             "statusCode":200,
             "data": {
@@ -101,10 +105,10 @@ class RecognizeTest(mini.MiniTest):
                 }
             }
         }
-        self.app.mock_wx_method("request",result=recognize_result,success=True)
+        self.app.mock_request(".*/identify.*", success=recognize_result)
         self.page.call_method("postMyImg",{"myBase64Img":"anything because mock"})
         self.page.wait_data_contains(["rescats","userimage"])
-        self.app.restore_wx_method("request")
+        
         page=self.app.get_current_page()
         self.assertEqual(len(page.data["rescats"]), 2)
         self.assertDictContainsSubset({"cat_id":3}, page.data["rescats"][0])
