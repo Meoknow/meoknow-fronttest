@@ -8,6 +8,7 @@ class RecognizeTest(mini.MiniTest):
         self.page.wait_data_contains(["rescats","userimage"])
         page=self.app.get_current_page()
         self.assertIn("reply",page.path,"测试信息:识图成功后成功跳转到结果页")#检查是否跳转到reply页
+        '''
     #测试给postMyImg发错误的base64字段，能否显示识别不到猫
     def test_postImg_request_fail(self):
         self.page.call_method("postMyImg",{"myBase64Img":"invalid token"})#调用postMyImg函数
@@ -25,6 +26,7 @@ class RecognizeTest(mini.MiniTest):
         page=self.app.get_current_page()
         item=page.data.loadingText
         self.assertIn("识别出错",item,"测试信息:上传图片成功，获取到空的猫列表成功返回无猫")
+        '''
     #测试后端返回了部分猫id为非法的情况时能否成功过滤
     def test_recognize_partial_failure(self):
         self.app.restore_wx_method("request")
@@ -54,6 +56,8 @@ class RecognizeTest(mini.MiniTest):
         page=self.app.get_current_page()
         self.assertEqual(len(page.data.rescats), 1)
         self.assertDictContainsSubset({"cat_id":3}, page.data.rescats[0], "成功返回了识猫结果中正确的那部分")
+        self.app.restore_request()
+
     #测试后端返回的猫编号全部错误时能否正确显示没有找到猫
     def test_recognize_all_failure(self):
         self.app.restore_wx_method("request")
@@ -83,6 +87,8 @@ class RecognizeTest(mini.MiniTest):
         page=self.app.get_current_page()
         item=page.data.loadingText
         self.assertIn("识别出错",item,"获取到猫列表，但所有猫均请求失败")
+        self.app.restore_request()
+
     #mock_request测试在请求单只猫信息并合并的过程是否出错
     def test_recognize_all_success(self):
         self.app.restore_wx_method("request")
@@ -113,3 +119,4 @@ class RecognizeTest(mini.MiniTest):
         self.assertEqual(len(page.data["rescats"]), 2)
         self.assertDictContainsSubset({"cat_id":3}, page.data.rescats[0])
         self.assertDictContainsSubset({"cat_id":4}, page.data.rescats[1], "成功返回了识猫结果中的全部2只猫咪")
+        self.app.restore_request()
