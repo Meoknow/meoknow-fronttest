@@ -2,7 +2,7 @@ from unittest.signals import registerResult
 import minium as mini
 
 class RecognizeTest(mini.MiniTest):
-    #发送正确的图片base64
+    #发送正确的图片base64到PostImg看整个流程能否正常工作
     def test_recognize_success(self):
         self.page.call_method("postMyImg",{"myBase64Img":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAAC2SURBVFhH7ZfLDYAgEETRprzagDVRlA14tSrNGImG4LK7fDzAS4yc2DcjJjpYaw/zI+N9/40u0I7Ati/X5VO1gXla79VDFQEkDw0HxQVCtb+p0sBXelBUgKreUUyAMxwUEeAOB1XOAEV2AUl6QArEXiEf6XBACmAzbCoVkRB9BC5RTEKTHrDOAFdCA/sQUum06QFbAGCI30JqKyIBEJLQpgfqr2InkTIciBvITf8v6AJdoHUBY059v0FeUOwe3gAAAABJRU5ErkJggg=="})
         self.page.wait_data_contains(["rescats","userimage"])
@@ -25,7 +25,7 @@ class RecognizeTest(mini.MiniTest):
         page=self.app.get_current_page()
         item=page.data.loadingText
         self.assertIn("识别出错",item,"测试信息:上传图片成功，获取到空的猫列表成功返回无猫")
-
+    #测试后端返回了部分猫id为非法的情况时能否成功过滤
     def test_recognize_partial_failure(self):
         self.app.restore_wx_method("request")
         recognize_result = {
@@ -52,9 +52,9 @@ class RecognizeTest(mini.MiniTest):
         self.page.wait_data_contains(["rescats","userimage"])
         
         page=self.app.get_current_page()
-        self.assertEqual(len(page.data["rescats"]), 1)
-        self.assertDictContainsSubset({"cat_id":3}, page.data["rescats"][0], "成功返回了识猫结果中正确的那部分")
-
+        self.assertEqual(len(page.data.rescats), 1)
+        self.assertDictContainsSubset({"cat_id":3}, page.data.rescats[0], "成功返回了识猫结果中正确的那部分")
+    #测试后端返回的猫编号全部错误时能否正确显示没有找到猫
     def test_recognize_all_failure(self):
         self.app.restore_wx_method("request")
         recognize_result = {
@@ -83,7 +83,7 @@ class RecognizeTest(mini.MiniTest):
         page=self.app.get_current_page()
         item=page.data.loadingText
         self.assertIn("识别出错",item,"获取到猫列表，但所有猫均请求失败")
-    
+    #mock_request测试在请求单只猫信息并合并的过程是否出错
     def test_recognize_all_success(self):
         self.app.restore_wx_method("request")
         recognize_result = {
@@ -111,5 +111,5 @@ class RecognizeTest(mini.MiniTest):
         
         page=self.app.get_current_page()
         self.assertEqual(len(page.data["rescats"]), 2)
-        self.assertDictContainsSubset({"cat_id":3}, page.data["rescats"][0])
-        self.assertDictContainsSubset({"cat_id":4}, page.data["rescats"][1], "成功返回了识猫结果中的全部2只猫咪")
+        self.assertDictContainsSubset({"cat_id":3}, page.data.rescats[0])
+        self.assertDictContainsSubset({"cat_id":4}, page.data.rescats[1], "成功返回了识猫结果中的全部2只猫咪")
